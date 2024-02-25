@@ -1,36 +1,69 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { initPixiApp } from '$lib/pixijs/PixiSetup';
+	import { auth, storage } from '$lib/firebase';
+	import { signInAnonymously, signOut, type UserCredential } from 'firebase/auth';
+	import { ref, getDownloadURL, type StorageReference } from 'firebase/storage';
+
+	let fileRef: StorageReference;
+	let downloadURL: string;
+
+	let videoFileRef: StorageReference;
+	let videoDownloadURL: string;
 
 	let container: HTMLDivElement;
 
 	onMount(async () => {
-		const PIXI = await import('pixi.js');
-		let type = 'WebGL';
-		if (!PIXI.utils.isWebGLSupported()) {
-			type = 'canvas';
+		const filePath = 'gs://pirate-music-video.appspot.com/test-images/dcop_logo_02.png';
+		const videoFile = 'gs://pirate-music-video.appspot.com/test-videos/main.mp4';
+		fileRef = ref(storage, filePath);
+		videoFileRef = ref(storage, videoFile);
+
+		try {
+			downloadURL = await getDownloadURL(fileRef);
+			videoDownloadURL = await getDownloadURL(videoFileRef);
+			console.log('Download URL:', downloadURL);
+			// await initPixiApp(container, { logo: downloadURL });
+		} catch (error) {
+			console.error('Error getting download URL:', error);
 		}
 
-		const app = new PIXI.Application({ width: 256, height: 256, backgroundColor: 0x1099bb });
-		let sprite = PIXI.Sprite.from('/dcop_logo_01.png');
-		sprite.anchor.set(0.5);
-		sprite.y = app.renderer.height / 2;
-		sprite.scale = { x: 0.15, y: 0.15 };
-
-		app.stage.addChild(sprite);
-
-		let elapsed = 0.0;
-		app.ticker.add((delta) => {
-			// Add the time to our total elapsed time
-			elapsed += delta;
-			// Update the sprite's X position based on the cosine of our elapsed time.  We divide
-			// by 50 to slow the animation down a bit...
-			sprite.x = 125.0 + Math.cos(elapsed / 25.0) * 50.0;
-		});
-
-		container.appendChild(app.view as HTMLCanvasElement);
+		await initPixiApp(container, { logo: downloadURL, video1: videoDownloadURL });
 	});
+
+	let userCredential: UserCredential;
+
+	async function handleAnonymousLogin() {
+		try {
+			userCredential = await signInAnonymously(auth);
+		} catch (error) {
+			console.error('Anonymous login error:', error);
+			// Handle the error appropriately
+		}
+	}
+
+	function handleSignOut() {
+		signOut(auth);
+	}
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
-<div bind:this={container}></div>
+<div class="flex flex-col items-center justify-center bg-slate-800">
+	<h1 class="text-white">Welcome to SvelteKit</h1>
+
+	<div bind:this={container}></div>
+
+	{#if userCredential}
+		<div class="text-white">
+			<p>Logged in as {userCredential.user.uid}</p>
+			<button on:click={handleSignOut}>Logout</button>
+		</div>
+	{:else}
+		<div class="text-white">
+			<button type="button" class="variant-filled btn" on:click={handleAnonymousLogin}>Login</button
+			>
+			<button type="button" class="variant-filled btn">Button</button>
+
+			<p>Not logged in</p>
+		</div>
+	{/if}
+</div>
