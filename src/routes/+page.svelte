@@ -11,25 +11,37 @@
 	let videoFileRef: StorageReference;
 	let videoDownloadURL: string;
 
+	let secondVideoFileRef: StorageReference;
+	let secondVideoDownloadURL: string;
+
 	let container: HTMLDivElement;
 
 	onMount(async () => {
 		const filePath = 'gs://pirate-music-video.appspot.com/test-images/dcop_logo_02.png';
 		const videoFile = 'gs://pirate-music-video.appspot.com/test-videos/main.mp4';
+		const secondVideoFile = 'gs://pirate-music-video.appspot.com/test-videos/art.mp4';
 		fileRef = ref(storage, filePath);
 		videoFileRef = ref(storage, videoFile);
+		secondVideoFileRef = ref(storage, secondVideoFile);
 
 		try {
 			downloadURL = await getDownloadURL(fileRef);
 			videoDownloadURL = await getDownloadURL(videoFileRef);
+			secondVideoDownloadURL = await getDownloadURL(secondVideoFileRef);
 			console.log('Download URL:', downloadURL);
 			// await initPixiApp(container, { logo: downloadURL });
 		} catch (error) {
 			console.error('Error getting download URL:', error);
 		}
-
-		await initPixiApp(container, { logo: downloadURL, video1: videoDownloadURL });
 	});
+
+	const startApp = async () => {
+		await initPixiApp(container, {
+			logo: downloadURL,
+			video1: videoDownloadURL,
+			video2: secondVideoDownloadURL
+		});
+	};
 
 	let userCredential: UserCredential;
 
@@ -58,10 +70,12 @@
 			<button on:click={handleSignOut}>Logout</button>
 		</div>
 	{:else}
-		<div class="text-white">
+		<div class="flex flex-col text-white">
+			<button type="button" class="variant-filled-success btn mb-10 mt-2" on:click={startApp}
+				>Start</button
+			>
 			<button type="button" class="variant-filled btn" on:click={handleAnonymousLogin}>Login</button
 			>
-			<button type="button" class="variant-filled btn">Button</button>
 
 			<p>Not logged in</p>
 		</div>

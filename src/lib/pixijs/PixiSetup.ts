@@ -1,6 +1,7 @@
 type PixiAppAssets = {
 	logo: string;
 	video1: string;
+	video2: string;
 }
 
 export async function initPixiApp(container: HTMLDivElement, assets: PixiAppAssets) {
@@ -11,7 +12,7 @@ export async function initPixiApp(container: HTMLDivElement, assets: PixiAppAsse
 	}
 	console.log("Pixi.js is using " + type);
 
-	const app = new PIXI.Application({ width: 256, height: 256, backgroundColor: 0x1099bb });
+	const app = new PIXI.Application({ width: 1280, height: 720, backgroundColor: 0x1099bb });
 	
 	//DCOP Icon
 	const sprite = PIXI.Sprite.from(assets.logo);
@@ -23,10 +24,40 @@ export async function initPixiApp(container: HTMLDivElement, assets: PixiAppAsse
 
 	// Testvideo
 	const texture = PIXI.Texture.from(assets.video1);
+	const texture2 = PIXI.Texture.from(assets.video2);
 	const videoSprite = new PIXI.Sprite(texture);
 	videoSprite.anchor.set(0.5);
-	videoSprite.y = app.renderer.height / 1.5;
-	videoSprite.scale = { x: 0.15, y: 0.15 };
+	videoSprite.y = app.renderer.height / 2;
+	videoSprite.x = app.renderer.width / 2;
+	videoSprite.scale = { x: 0.5, y: 0.5 };
+
+	videoSprite.eventMode = 'dynamic';
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const videoElement = texture.baseTexture.resource.source;
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const videoElement2 = texture2.baseTexture.resource.source;
+	videoElement.loop = true;
+	videoElement2.loop = true;
+
+	videoSprite.onclick = () => {
+		
+		if (videoSprite.texture === texture2) {
+			// videoElement.play();
+			// console.log('playing');
+			videoSprite.texture = texture;
+		} else {
+			// videoElement.pause();
+			// console.log('paused');
+			videoSprite.texture = texture2;
+		}
+
+		
+	}
+
+	
+
 
 	app.stage.addChild(videoSprite);
 	// texture.baseTexture.resource.source.play();
